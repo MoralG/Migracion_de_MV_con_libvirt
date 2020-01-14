@@ -6,7 +6,7 @@ Realiza el proceso de migración de una máquina virtual que está ejecutando un
 
 Cuanto mayor sea el nivel de automatismo de la tarea más alta será la calificación.
 
-### [FASE 1]()
+### [FASE 1](https://github.com/MoralG/Migracion_de_MV_con_libvirt/blob/master/Migracion_de_MV_con_libvirt.md#fase-1)
 - Crear una MV en libvirt/KVM de tu equipo conectado a una red interna que tenga salida por NAT usando la imagen de buster del NAS y con aprovisionamiento ligero (MV1).
 - Configurar la RAM disponible a 500 MiB
 - Crear un fichero adicional de 200 MiB y conectarlo a MV1 a través de libvirt
@@ -15,7 +15,7 @@ Cuanto mayor sea el nivel de automatismo de la tarea más alta será la califica
 - Crear una regla de iptables que redirija las peticiones al puerto 5432/tcp que se realicen desde fuera a MV1 para que la base de datos sea accesible desde el exterior.
 - Crear un registro en el DNS para el servicio
 
-### [FASE 2]()
+### [FASE 2](https://github.com/MoralG/Migracion_de_MV_con_libvirt/blob/master/Migracion_de_MV_con_libvirt.md#fase-2)
 
 - Monitorizar el uso de RAM de MV1 de manera que comience la migración en el momento que el uso de RAM supere el 90%
 - Crear una MV en libvirt/KVM remoto conectado a la red interna 10.0.1.0/24 que tiene salida por NAT usando la imagen de buster del NAS y con aprovisionamiento ligero (MV2).
@@ -28,6 +28,6 @@ Cuanto mayor sea el nivel de automatismo de la tarea más alta será la califica
 - Actualizar el registro DNS para que el servicio lo preste ahora MV2
 - Comprobar el funcionamiento
 
-### [FASE 3]()
+### [FASE 3](https://github.com/MoralG/Migracion_de_MV_con_libvirt/blob/master/Migracion_de_MV_con_libvirt.md#fase-3)
 
 - Monitorizar MV2 y cuando el uso de RAM llegue al 90%, subir la RAM asignada a 2 GiB en vivo.
