@@ -269,7 +269,7 @@ Para que se pueda acceder de forma remota a la base de datos de PostgreSQL, adem
 
 ###### Añadimos la siguiente linea al fichero `/etc/postgresql/11/main/pg_hba.conf`
 ~~~
-host    all             all             192.168.0.4/24          md5
+host    all             all             10.10.10.0/24          md5
 ~~~
 
 ###### Descomentamos la linea `#listen_addresses = 'localhost'` del fichero `/etc/postgresql/11/main/postgresql.conf` y la modificamos de la siguiente forma:
@@ -280,8 +280,8 @@ listen_addresses = '*'
 
 ###### Reiniciamos los servicios
 ~~~
-sudo systemctl status postgresql@11-main.service
-sudo systemctl status postgresql.service
+sudo systemctl restart postgresql@11-main.service
+sudo systemctl restart postgresql.service
 ~~~
 
 ~~~
@@ -290,8 +290,8 @@ psql -h 10.10.10.12 -U debian -d debiandb
 
 ###### Creamos las reglas de iptables necesarias
 ~~~
-sudo iptables -t nat -I PREROUTING -p tcp --dport 5432 -i enp1s0 -j DNAT --to 10.10.10.1
-sudo iptables -t nat -I POSTROUTING -p tcp --sport 5432 -s 10.10.10.0/24 -j MASQUERADE
+iptables -t nat -A PREROUTING -p tcp --dport 5432 -i wlp2s0 -j DNAT --to 10.10.10.12
+iptables -t nat -A POSTROUTING -p tcp --sport 5432 -s 10.10.10.0/24 -j MASQUERADE
 ~~~
 
 - Crear un registro en el DNS para el servicio
