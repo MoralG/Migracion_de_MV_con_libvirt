@@ -18,7 +18,7 @@ Para utilizar la herramientas que vamos a utilizar en esta tarea, tenemos que in
 ###### Instalamos los paquetes `qemu-kvm`, `libvirt-clients`, `libvirt-daemon-system`
 
 ~~~
-sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system
+sudo apt install virt-install qemu-kvm libvirt-clients libvirt-daemon-system virt-manager virt-install
 ~~~
 
 Antes de crear la máquina virtual, tenemos que configurar la red NAT. Para crear la red NAT vamos a crear un fichero `.xml` y le indicamos la dirección que va a tomar la máquina y el rango del DHCP.
@@ -73,7 +73,7 @@ Ahora vamos a crear la máquina virtual, para hacer esto vamos a utilizar el com
 ###### Creamos la máquina con aprovisionamiento ligero e indicandole la red NAT
 ~~~
 virt-install --connect qemu:///system --name Copia1-Buster \
---memory 500 --disk path=/home/moralg/MaquinaQemu/Buster.qcow2 \
+--memory 500 --disk path=/home/moralg/MaquinaQemu/Copia1-Buster.qcow2 \
 --vcpus=1 --boot hd --vnc --os-type linux --os-variant=debian10 \
 --network network=red_nat --noautoconsole --hvm --keymap es
 ~~~
@@ -143,7 +143,7 @@ Ahora solo nos quedaría iniciar la máquina y cambiar la interfaz de red por de
 
 ###### Iniciamos la máquina
 ~~~
-virsh start Copia1-Buster
+virsh -c qemu:///system start Copia1-Buster
 ~~~
 
 ![Tarea1.1](image/Tarea1.1_KVM.png)
@@ -179,7 +179,7 @@ sudo mv /var/lib/postgresql /var/lib/postgresql-copy
 sudo mkdir /var/lib/postgresql
 ~~~
 
-###### Modificamos el fichero `/etc/fstab` y añadimos una linea para el automontaje del disco nuevo que tenemos que particionar y formatear.
+Modificamos el fichero `/etc/fstab` y añadimos una linea para el automontaje del disco nuevo que tenemos que particionar y formatear.
 
 ###### Creamos una partición completa del disco
 ~~~
@@ -249,18 +249,49 @@ lsblk -l
     vdb1 254:17   0  199M  0 part /var/lib/postgresql
 ~~~
 
+Por último tenemos que copiar todos el contenido de un directorio al del disco montado y cambiar el propietario del nuevo directorio de manera recursiva.
+
 ###### Copiamos los ficheros de `/var/lib/postgresql-copy` a `/var/lib/postgresql`
 ~~~
 sudo cp -r /var/lib/postgresql-copy/* /var/lib/postgresql
+~~~
+
+###### Cambiamos el propietario del nuevo directorio
+~~~
+sudo chown -R postgres:postgres /var/lib/postgresql
 ~~~
 
 - Crear una regla de iptables que redirija las peticiones al puerto 5432/tcp que se realicen desde fuera a MV1 para que la base de datos sea accesible desde el exterior.
 
 -------------------------------------------------------
 
+Para que se pueda acceder de forma remota a la base de datos de PostgreSQL, ademas de las reglas de iptables, tenemos que modificar algunos ficheros.
+
+###### Añadimos la siguiente linea al fichero `/etc/postgresql/11/main/pg_hba.conf`
 ~~~
-iptables -t nat -A PREROUTING -p tcp --dport 5432 -i wlo1 -j DNAT --to 10.15.20.10
-iptables -t nat -A POSTROUTING -p tcp --sport 5432 -s 10.10.10.0/24 -j MASQUERADE
+host    all             all             192.168.0.4/24          md5
+~~~
+
+###### Descomentamos la linea `#listen_addresses = 'localhost'` del fichero `/etc/postgresql/11/main/postgresql.conf` y la modificamos de la siguiente forma:
+
+~~~
+listen_addresses = '*'
+~~~
+
+###### Reiniciamos los servicios
+~~~
+sudo systemctl status postgresql@11-main.service
+sudo systemctl status postgresql.service
+~~~
+
+~~~
+psql -h 10.10.10.12 -U debian -d debiandb
+~~~
+
+###### Creamos las reglas de iptables necesarias
+~~~
+sudo iptables -t nat -I PREROUTING -p tcp --dport 5432 -i enp1s0 -j DNAT --to 10.10.10.1
+sudo iptables -t nat -I POSTROUTING -p tcp --sport 5432 -s 10.10.10.0/24 -j MASQUERADE
 ~~~
 
 - Crear un registro en el DNS para el servicio
